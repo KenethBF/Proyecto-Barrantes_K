@@ -1,0 +1,100 @@
+---
+title: <center> Determinantes del área de telas orbiculares en género *Metazygia* (Araneidae) en zona urbana </center>
+author: <center> Barrantes, K </center>
+date: <center> 30/11/2020 </center>
+output:
+  html_document:
+    toc: yes
+    toc_depth: 4
+    toc_float:
+      collapsed: no
+      smooth_scroll: no
+---
+
+---
+
+# Pregunta de investigación
+
+El género *Metazygia*, perteneciente a la familia Araneide, consiste principalmente de arañas nocturnas, las cuales se distribuyen en el neotropico y zonas restringidas del neartico (). Estas se alimentan principalmente de artropodos, destacando polillas, mariposas nocturnas y dipteros, los cuales se ven atraídos a zonas iluminadas, ya sea para alimentarse o como parte de los habitos que componen su comportamineto, *Metazygia* aprovecha de estos y crea telas orbiculares, donde sus presas quedan adheridas para ser deboradas posteriormente. 
+Tomando en cuenta los habitos alimenticios del género e individuos que componen su dieta, surge la pregunta **¿Qué variables determinan el área de las telas para el género *Metazygia*?**
+
+&nbsp;
+
+# Variables a tomar en cuenta y relación entre estas
+
+Se deben tomar en cuenta variables que indiquen área de la tela, el grado de iluminación al que esté expuesta, altura y distancia (posición) a la que se encuentre de una fuente de luz y contorno inmediato al que se encuentre expuesta la tela. También se debería obtener valores para la cantidad de presas atrapadas y daño causado a las telas por factores externos a las arañas, siendo que estas últimas no se encuentran dentro de la base de datos.
+
+Para ilustrar gráficamente las interacciones, se utiliza un diagrama de analisis causal (DAG) (**Figura 1**). Se muestra la simbologia empelada para cada variable:
+
+
+- Área = a
+- Luz = l
+- Posición = p
+- Lugar = y
+- Presas = j
+- Daños = d
+
+
+```{r DAG, echo=FALSE, message=FALSE, fig.align='center'}
+library(dagitty)
+library(ggdag)
+
+DAG <- dagitty("dag{
+             l -> a ;
+             p -> a;
+             y -> a;
+             d -> a;
+             l -> p;
+             p -> d;
+             d -> j;
+             p -> j;
+             a -> j;
+             l -> j;
+             y -> j
+             p [exposure]
+             a [outcome]
+             j [unobserved]
+             d [unobserved]
+             }")
+
+ggdag(DAG, layout = "circle") + theme_dag() 
+
+```
+
+**Figura 1.** DAG de interacciones entre variables, se toma área (a) como outcome, posición (p) como exposure y las variables presas (j) y daños (d) como unobseved.
+
+&nbsp;
+
+Se evaluan las interacciones en el DAG para determinar si hay variables que se deban condicionar y supuestos que debe cumplir para que se den correctamente los modelos.
+
+```{r}
+
+adjustmentSets(x = DAG, exposure = "p", outcome = "a", type="all", effect = "total") # El DAG sugire condicionar "l" y "y" 
+
+impliedConditionalIndependencies(x = DAG, type = "missing.edge") # Condiciones de independencia para que se cumpla el modelo
+
+impliedConditionalIndependencies(x = DAG, type = "basis.set") # Condiciones de independencia para que se cumpla el modelo
+
+```
+
+Para que se cumpla el DAG debe de haber independencia entre lugar y luz, así como posición y luz
+siendo necesario condicionar lugar, en los casos en que se toman en cuenta daño (que es inobservable)
+se debe condicionar posición y lugar. Partiendo de las interacciones se predice que los sitios en los que haya mayor iluminación y por ende, mayor cernanía a fuentes de luz habra mayor cantidad de presas potenciales, por lo que la tela tendrá una menor área en comparación a las que se encuentren alejadas de fuentes de luz o en oscuridad, por la baja densidad de presas.
+
+&nbsp;
+
+# Conjunto de datos
+
+
+# Análisis de datos
+
+
+# Interpretación de resultados
+
+
+&nbsp;
+
+---
+```{r session, echo=FALSE}
+sessionInfo() # Información de la sesión
+```
