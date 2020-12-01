@@ -86,6 +86,7 @@ se debe condicionar posición y lugar. Partiendo de las interacciones se predice
 # Conjunto de datos
 
 
+
 # Análisis de datos
 
 
