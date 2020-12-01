@@ -15,7 +15,7 @@ output:
 
 # Pregunta de investigación
 
-El género *Metazygia*, perteneciente a la familia Araneide, consiste principalmente de arañas nocturnas, las cuales se distribuyen en el neotropico y zonas restringidas del neartico (). Estas se alimentan principalmente de artropodos, destacando polillas, mariposas nocturnas y dipteros, los cuales se ven atraídos a zonas iluminadas, ya sea para alimentarse o como parte de los habitos que componen su comportamineto, *Metazygia* aprovecha de estos y crea telas orbiculares, donde sus presas quedan adheridas para ser deboradas posteriormente. 
+El género *Metazygia*, perteneciente a la familia Araneide, consiste principalmente de arañas nocturnas, las cuales se distribuyen en el neotropico y zonas restringidas del neartico (Levi, 1995). Estas se alimentan principalmente de artropodos, destacando polillas, mariposas nocturnas y dipteros, los cuales se ven atraídos a zonas iluminadas, ya sea para alimentarse o como parte de los habitos que componen su comportamineto, *Metazygia* aprovecha de estos y crea telas orbiculares, donde sus presas quedan adheridas para ser deboradas posteriormente (Levi, 1995). 
 Tomando en cuenta los habitos alimenticios del género e individuos que componen su dieta, surge la pregunta **¿Qué variables determinan el área de las telas para el género *Metazygia*?**
 
 &nbsp;
@@ -67,7 +67,7 @@ ggdag(DAG, layout = "circle") + theme_dag()
 
 Se evaluan las interacciones en el DAG para determinar si hay variables que se deban condicionar y supuestos que debe cumplir para que se den correctamente los modelos.
 
-```{r}
+```{r requisitos}
 
 adjustmentSets(x = DAG, exposure = "p", outcome = "a", type="all", effect = "total") # El DAG sugire condicionar "l" y "y" 
 
@@ -78,24 +78,134 @@ impliedConditionalIndependencies(x = DAG, type = "basis.set") # Condiciones de i
 ```
 
 Para que se cumpla el DAG debe de haber independencia entre lugar y luz, así como posición y luz
-siendo necesario condicionar lugar, en los casos en que se toman en cuenta daño (que es inobservable)
-se debe condicionar posición y lugar. Partiendo de las interacciones se predice que los sitios en los que haya mayor iluminación y por ende, mayor cernanía a fuentes de luz habra mayor cantidad de presas potenciales, por lo que la tela tendrá una menor área en comparación a las que se encuentren alejadas de fuentes de luz o en oscuridad, por la baja densidad de presas.
+siendo necesario condicionar lugar, en los casos en que se toman en cuenta daño (que es inobservable) se debe condicionar posición y lugar. Partiendo de las interacciones se predice que los sitios en los que haya mayor iluminación y por ende, mayor cernanía a fuentes de luz habra mayor cantidad de presas potenciales, por lo que la tela tendrá una menor área en comparación a las que se encuentren alejadas de fuentes de luz o en oscuridad, por la baja densidad de presas.
 
 &nbsp;
 
 # Conjunto de datos
 
+Los datos se obtienen de muestreos realizados en campus de la Universidad de Costa Rica, en el cantón de San Pedro, San José, Costa Rica. Los muestreos se realizaron durante tres noches consecutivas, tomando datos de todas las arañas pertenecientes al género *Metazygia* que se encontraran en un transecto de 90 m, este se caracterizó por ser ser un pasillo techado, con abundantes columnas e iluminación por lamparas fosforescentes. Se tomaron las variables:
 
+- Posición: catalogada con tres niveles, siendo "bajo" para telas a una altura menor a 1 m, "medio" si se encontraban de 1 - 1,8 m y "alto" si se encontraban a una altura superior a 1.8 m.
+
+- Lugar: el transecto seleccionado se encuentra deliminato al este por un bosque en estado de regeneración, el cual se encuentra delimitado por una malla metalica, mientras que en el lado oeste se encuentra una zona libre de vegetación y construcciones que no brindan puntos de sosten para las telas. Se cataloga la tela según se encontrara en el lado este como "bosquecito" y lado oeste como "carteles".
+
+- Luz: se toman dos niveles para esta variable, siendo que reciba luz directamente de lampara fosforescente catalogada como "si", si no tenía incidencia directa de luz se catalogo como "no".
+
+- Area: el área fue obtenida mediante la toma de fotografias a las telas, las cuales luego fueron procesadas utilizando el software ImageJ (Rasband, 2020). Esta se calculó tomando el perimetro que crean los hilos externo de la tela y considerandola como un objeto sólido.
+
+&nbsp;
 
 # Análisis de datos
 
+Al realizar pruebas de supuestos paramétricos se determina que esta no cumple con los requerimientos, siendo necesaria la utilización de pruebas no paramétricas (este análisis se encuentra dentro de documento "Metazyigia script" en carpeta "R"). Se decide realizar prueba Tukey, tomando como variable respuesta "area" con respecto a las otras tres variables en estudio.
 
-# Interpretación de resultados
+```{r datos, echo = FALSE}
+
+library(readr)
+Metazygia <- read_delim("Metazygia.csv", 
+    ";", escape_double = FALSE, col_types = cols(area = col_number(), 
+        lugar = col_factor(levels = c("bosquecito", 
+            "carteles")), luz = col_factor(levels = c("si", 
+            "no")), posicion = col_factor(levels = c("alto", 
+            "medio", "bajo"))), trim_ws = TRUE)
+
+```
+
+```{r tukey}
+
+mod <- lm(area ~ luz + posicion + lugar, data = Metazygia) #Modelo lineal para evaluar tukey
+summary(mod)
+TukeyHSD(aov(mod)) #Tukey test
+
+```
 
 
 &nbsp;
 
+# Interpretación de resultados
+
+Al realizar la prueba Tukey para las variables lugar, posición y luz con respecto a área, solamente luz presenta diferencia entre los niveles para una significancia de 95%  (Tukey test diff= -147.4333, p < 0.05). Partiendo de los valores p suministrados por Tukey no se encuentra evidencia suficiente que indique un cambio en el área de la tela según la distancia vertical a la que se encuentre de una fuente de luz o si se encuentra en zonas abiertas que no brinden puntos de sujeción, sin embargo si se obtiene un cambio si estas se encuentran expuestas a luz no (**Figura 2**), siendo de mayor tamaño las que están expuestas a la luz, contrario a lo que se predijo.
+Al realizar gráficos con las medias para el area y asociarlas en conjuntos de dos variables (**Figura 3**), se observa un patron similar a Tukey, pero con tendencia a tener mayor área las telas que se encontraban expuestas a luz pero a una posición media, lo que indicaría se apega a descrito por Willtmontt *et al*, 2019, siendo posiblemente por bajas densidades de presas.
+
+
+```{r boxplot, echo=FALSE, message=FALSE, fig.align='center'}
+
+library(dplyr)
+library(gridExtra)
+
+
+##Boxplot de area tela vs lugar
+box1 <- ggplot(data = Metazygia, aes(x = lugar, y = area, color = lugar)) +
+  geom_boxplot() +
+  theme_bw()
+
+##Boxplot area vs luz
+box2 <- ggplot(data = Metazygia, aes(x = luz, y = area, color = luz)) +
+  geom_boxplot() +
+  theme_bw()
+
+##Boxplot area vs posicion
+box3 <-ggplot(data = Metazygia, aes(x = posicion, y = area, color = posicion)) +
+  geom_boxplot() +
+  theme_bw()
+
+grid.arrange(box1, box2, box3, ncol=2) # Colocar los tres boxplot en un único gráfico
+
+```
+**Figura 2.** Comparaciones de areas para cada nivel de las variables en estudio.
+
+&nbsp;
+
+```{r medias, echo=FALSE, message=FALSE, fig.align='center'}
+
+# Diferencia de medias de area según luz contra lugar
+plot1 <- Metazygia %>% group_by(luz, lugar) %>%
+  summarise(media = mean(area)) %>% ##Promedio desviacion, corriendo solo esto se ve lo que se grafic?
+  ggplot(aes(x = luz, y = media, group = lugar, colour = lugar)) +
+  geom_line() +
+  geom_point() +
+  theme_bw()
+
+# Diferencia de medias de area según luz contra posición
+plot2 <- Metazygia %>% group_by(luz, posicion) %>%
+  summarise(media = mean(area)) %>% ##Promedio desviacion, corriendo solo esto se ve lo que se grafic?
+  ggplot(aes(x = luz, y = media, group = posicion, colour = posicion)) +
+  geom_line() +
+  geom_point() +
+  theme_bw()
+
+# Diferencia de medias de area según posicón contra lugar
+plot3 <- Metazygia %>% group_by(posicion, lugar) %>%
+  summarise(media = mean(area)) %>% ##Promedio desviacion, corriendo solo esto se ve lo que se grafic?
+  ggplot(aes(x = posicion, y = media, group = lugar, colour = lugar)) +
+  geom_line() +
+  geom_point() +
+  theme_bw()
+
+grid.arrange(plot1, plot2, plot3, ncol=2) # Colocar los tres boxplot en un único gráfico
+
+```
+**Figura 3.** Comparación de medias del area para cada conjunto de dos variables.
+
+&nbsp;
+
+# Referencias
+
+Levi, H. (1995). The neotropical orb-weaver genus Metazygia (Araneae: Araneidae). *Bulletin of the Museum of Comparative Zoology 154*(2): 63-151. 
+
+Rasband, W. (2020), *ImageJ.* U. S. National Institutes of Health, Bethesda, Maryland, USA, https://imagej.nih.gov/ij/.
+
+Willmott, N. J., Henneken, J., Elgar, M. A., & Jones, T. M. (2019). Guiding lights: Foraging responses of juvenile nocturnal orb‐web spiders to the presence of artificial light at night. *Ethology 125*(5), 289-297.
+
+&nbsp;
+
+Datos y código disponibles en repositorio: https://github.com/KenethBF/Proyecto-Barrantes_K.git
+
 ---
+
+# Información de sesión
+
 ```{r session, echo=FALSE}
 sessionInfo() # Información de la sesión
 ```
